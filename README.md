@@ -1,5 +1,5 @@
 # MP2
-EEEN30150 Modelling and Simulation, Minor Project 2
+EEEN30150 Modelling and Simulation, Minor Project 2.
 
 Numerical simluation of the solar system using Newton's law of gravitation.
 
