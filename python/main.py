@@ -126,7 +126,7 @@ class Simulation:
         time_text = ax.text2D(0.05, 0.95, '', transform=ax.transAxes, color='white')
 
         def update(frame):
-            time_text.set_text(f'Day {frame * n}, Year {frame * n /365:.2f}')
+            time_text.set_text(f'Day {frame}, Year {frame/365:.2f}')
             trail = 2000 # controls how long the trail is behind the object
             start = max(0, frame - trail)
             for i in range(self.N_bodies):
