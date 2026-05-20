@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from matplotlib.animation import FuncAnimation
 import argparse
+from integrators import rk4, abm4, abm4_rk4, leapfrog
 
 from bodies import (
     Body,
@@ -27,7 +28,8 @@ from bodies import (
 parser = argparse.ArgumentParser()
 parser.add_argument("--dt", type=float, default=86400, help="timestep in seconds (default = 86400s)")
 parser.add_argument("--years", type=int, default=10, help="simulation duration in years (default = 10 years)")
-parser.add_argument("--visual", type=str, default="plot", choices=["plot", "ani"], help="choose plot or animation")
+parser.add_argument("--method", type=str, default="abm4", choices=["rk4", "abm4", "leapfrog"], help="choose simulation method")
+parser.add_argument("--visual", type=str, default="plot", choices=["plot", "anim"], help="choose plot or animation")
 parser.add_argument("--interval", type=float, default=30, help="controls speed of animation. default is 30. higher is slower, lower is faster.")
 args = parser.parse_args()
 
@@ -54,9 +56,20 @@ class Simulation:
     def print_matrix(self) -> None:
         print(self.mat)
 
-    def dmatrix(self, mat: np.ndarray) -> np.ndarray:
+    def accel_matrix(self, pos: np.ndarray) -> np.ndarray:
+        acc = np.zeros_like(pos)  # Initialise empty acceleration matrix
+        for i in range(self.N_bodies):
+            for j in range(self.N_bodies):
+                if i == j:  # obviously not calculating gravity due to itself
+                    continue
+                r_vec = pos[j] - pos[i]  # distance between objects
+                r_abs = np.linalg.norm(r_vec)
+                acc[i] += (G * self.masses[j] * r_vec) / (r_abs**3)
+        return acc
+            
+    def dmatrix(self, t, mat: np.ndarray) -> np.ndarray:
         """
-        This function takes in the matrix that consists of the velocity and the position, where the first three coloumns ae
+        This function takes in the matrix that consists of the velocity and the position, where the first three coloumns are position, last 3 are velocity
         It returns a matrix of acceleration and velocity, where velocity is the first three coloumns and acceleration is the last three coloumns.
         """
 
@@ -64,33 +77,52 @@ class Simulation:
         dmat = np.zeros_like(mat)
         dmat[:, :3] = mat[:, 3:]  # dr/dt, i.e. v
 
-        for i in range(self.N_bodies):
-            acc = np.zeros(3)  # set empty acceleration vector to zero
-            for j in range(self.N_bodies):
-                if i == j:  # obviously not calculating gravity due to itself
-                    continue
-                r_vec = pos[j] - pos[i]  # distance between objects
-                r_abs = np.linalg.norm(r_vec)
-                acc += (G * self.masses[j] * r_vec) / (r_abs**3)
-            dmat[i, 3:] = acc  # dv/dt, i.e. a
-
+        dmat[:, 3:] = self.accel_matrix(pos)
         return dmat
 
-    def rk4(self, mat: np.ndarray, dt: float) -> np.ndarray:
-        k1 = self.dmatrix(mat)
-        k2 = self.dmatrix(mat + 0.5 * dt * k1)
-        k3 = self.dmatrix(mat + 0.5 * dt * k2)
-        k4 = self.dmatrix(mat + dt * k3)
 
-        return mat + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
-    def run(self, dt: int, T: int, t0: int) -> None:
-        n_steps = int((T - t0)/dt)
-        history = [self.mat[:, :3].copy()] # only need positions, forgo the velocity columns
-        for _ in tqdm(range(n_steps)): # just a progress bar
-            self.mat = self.rk4(self.mat, dt) # rk4 iterations
-            history.append(self.mat[:, :3].copy())
-        self.history = np.array(history) # return history at the end for plotting
+    def run(self, dt: float, T: float, t0: float = 0.0,
+            method: str = "abm4") -> None:
+        n_steps = int((T - t0) / dt)
+        history = [self.mat[:, :3].copy()]
+        t = t0
+
+        if method == "rk4":
+            for _ in tqdm(range(n_steps)):
+                self.mat = rk4(t, self.mat, dt, self.dmatrix)
+                t += dt
+                history.append(self.mat[:, :3].copy())
+
+        elif method == "abm4":
+            # abm4_rk4 does the RK4 bootstrap and the first ABM4 step,
+            # returning the state at t0, t0+dt, t0+2dt, t0+3dt, t0+4dt.
+            y1, y2, y3, y4, y5 = abm4_rk4(t, self.mat, dt, self.dmatrix)
+            for y in (y2, y3, y4, y5):
+                history.append(y[:, :3].copy())
+            buf = [y2, y3, y4, y5]          # rolling window of last 4 states
+            t  += 4 * dt
+            for _ in tqdm(range(n_steps - 4)):
+                y_new = abm4(t, *buf, dt, self.dmatrix)
+                buf   = [buf[1], buf[2], buf[3], y_new]
+                t    += dt
+                history.append(y_new[:, :3].copy())
+            self.mat = buf[-1]
+
+        elif method == "leapfrog":
+            r = self.mat[:, :3].copy()
+            v = self.mat[:, 3:].copy()
+            for _ in tqdm(range(n_steps)):
+                r, v = leapfrog(r, v, dt, self.accel_matrix)
+                history.append(r.copy())
+            self.mat[:, :3], self.mat[:, 3:] = r, v
+
+        else:
+            raise ValueError(
+                f"Unknown method {method!r}; use 'rk4', 'abm4', or 'leapfrog'."
+            )
+
+        self.history = np.array(history)
 
     def animate(self, n: int, legend: bool = True) -> None:
         """
@@ -179,16 +211,16 @@ bodies = [
     Jupiter,
     Mars,
     Mercury,
-    # Neptune,
+    Neptune,
     Uranus,
     Venus,
-    # Ganymede,
-    # Titan,
-    # Callisto,
-    # Io,
+    Ganymede,
+    Titan,
+    Callisto,
+    Io,
     Moon,
-    # Europa,
-    # Triton,
+    Europa,
+    Triton,
 ]
 
 
@@ -196,6 +228,8 @@ bodies = [
 # simulation arguments
 dt = args.dt
 T = args.years * 365 *24 * 3600
+user_method = args.method
+
 
 # overrides for T and dt
 # dt = 24 * 3600 # 1 hour time steps
@@ -203,10 +237,10 @@ T = args.years * 365 *24 * 3600
 # T = n * 365 * 24 * 3600 # simulation lasts n years
 
 mySim = Simulation(bodies)
-mySim.run(dt, T, t0=0)
+mySim.run(dt, T, t0=0, method=user_method)
 
 # plot or animation
 if (args.visual == "plot"):
     mySim.plot()
-elif (args.visual == "ani"):
+elif (args.visual == "anim"):
     mySim.animate(10, legend=True)
