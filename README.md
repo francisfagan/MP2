@@ -25,3 +25,6 @@ python main.py --visual ani --years 5 --dt 3600
 # lower interval allows for faster animation
 python main.py --visual ani --interval 5
 ```
+
+https://planet-texture-maps.fandom.com/wiki/
+https://www.planetaryvisions.com/index.php
