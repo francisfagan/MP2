@@ -11,7 +11,7 @@ STEPS_PER_FRAME = 24                 # advance 10 simulated days per drawn frame
 FPS         = 60                      # max frames per second
 TRAIL_LEN   = 4000                    # points kept per orbital trail
 SCENE_RANGE_AU = 35.0                 # initial zoom (AU)
-MOON_ORBIT_SCALE = 50.0              # visual-only magnification of moon-to-host offsets
+MOON_ORBIT_SCALE = 70.0              # visual-only magnification of moon-to-host offsets
 TEXTURE_DIR = "textures"              # folder with <BodyName>.jpg|png; set to None to disable
 
 # Each satellite is drawn at host_pos + (sat_pos - host_pos) * MOON_ORBIT_SCALE,
