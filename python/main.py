@@ -29,7 +29,6 @@ from bodies import (
     Neptune,
     Triton,
 )
-paused = False
 
 # parser for cli arguments
 parser = argparse.ArgumentParser()
@@ -37,16 +36,21 @@ parser.add_argument("--dt", type=float, default=86400, help="timestep in seconds
 parser.add_argument("--years", type=int, default=10, help="simulation duration in years (default = 10 years)")
 parser.add_argument("--method", type=str, default="abm4", choices=["rk4", "abm4", "leapfrog"], help="choose simulation method")
 parser.add_argument("--visual", type=str, default="plot", choices=["plot", "anim"], help="choose plot or animation")
-parser.add_argument("--interval", type=float, default=30, help="controls speed of animation. default is 30. higher is slower, lower is faster.")
-parser.add_argument("--fps", type=float, default=20, help="VPython animation frame rate; lower values slow the animation")
-parser.add_argument("--texture_dir", type=str, default="textures", help="choose directory for body textures. Texture names must match planet names")
+parser.add_argument("--frame_skip", type=float, default=10, help="controls number of frames skipped during animation. Default is 10. Higher produces faster animation, but movement of bodies with short orbits becomes erratic.")
+parser.add_argument("--fps", type=float, default=30, help="VPython animation frame rate; lower values slow the animation. Default is 30")
+parser.add_argument("--texture_dir", type=str, default="textures", help="choose directory for body textures. Texture names must match planet names. Default is /MP2/textures when cwd is /MP2/")
 args = parser.parse_args()
 
 # simulation arguments
+t0 = 0
 dt = args.dt
 T = args.years * 365 *24 * 3600
 user_method = args.method
 animation_fps = args.fps
+frame_skip = int(args.frame_skip)
+paused = False
+running = True
+
 
 
 # Constants
@@ -105,44 +109,20 @@ class Simulation:
 
 
     # Main method called for running sim.
-    #   -Initialises animation scene
     #   -Calculates body positions one time step forward using chosen method
-    #   -Updates positions of bodies in animation
     def run(self, dt: float, T: float, t0: float = 0.0,
             method: str = "abm4") -> None:
         n_steps = int((T - t0) / dt)
         history = [self.mat[:, :3].copy()]
         t = t0
 
-        if args.visual == 'anim':
-            display_skip = 10
-            rate(animation_fps)
-            sun_idx = self.bodies.index(Sun)
-            self.scene, self.spheres, name_labels, HOST_INDEX, time_text = initialise_animation(
-                self.mat, method, self.bodies, sun_idx
-            )
-
-            # Create pause button
-            def _toggle_pause(b):
-                global paused
-                paused = not paused
-                b.text = "Resume" if paused else "Pause"
-                for lbl in name_labels:
-                    lbl.visible = paused
-            self.scene.append_to_caption("\n")
-            button(text="Pause", bind=_toggle_pause)
 
         if method == "rk4":
             for step in tqdm(range(n_steps)):
-                while paused:
-                    rate(animation_fps)
                 self.mat = rk4(t, self.mat, dt, self.dmatrix)
                 t += dt
                 history.append(self.mat[:, :3].copy())
-                if args.visual == 'anim':
-                    if step % display_skip == 0:
-                        self.advance_anim(time_text, sun_idx, name_labels, t, method, HOST_INDEX)
-                        rate(animation_fps)
+
 
         elif method == "abm4":
             # abm4_rk4 does the RK4 bootstrap and the first ABM4 step,
@@ -153,34 +133,21 @@ class Simulation:
             buf = [y2, y3, y4, y5]          # rolling window of last 4 states
             t  += 4 * dt
             for step in tqdm(range(n_steps - 4)):
-                while paused:
-                    rate(animation_fps)
                 y_new = abm4(t, *buf, dt, self.dmatrix)
                 buf   = [buf[1], buf[2], buf[3], y_new]
                 t    += dt
                 history.append(y_new[:, :3].copy())
                 self.mat = y_new
-                if args.visual == 'anim':
-                    if step % display_skip == 0:
-                        self.advance_anim(time_text, sun_idx, name_labels, t, method, HOST_INDEX)
-                        rate(animation_fps)
-            self.mat = buf[-1]
+
 
         elif method == "leapfrog":
             r = self.mat[:, :3].copy()
             v = self.mat[:, 3:].copy()
             for step in tqdm(range(n_steps)):
-                while paused:
-                    rate(animation_fps)
                 r, v = leapfrog(r, v, dt, self.accel_matrix)
                 t += dt
-                #history.append(r.copy())
+                history.append(r.copy())
                 self.mat[:, :3], self.mat[:, 3:] = r, v
-                if args.visual == 'anim':
-                    if step % display_skip == 0:
-                        self.advance_anim(time_text, sun_idx, name_labels, t, method, HOST_INDEX)
-                        rate(animation_fps)
-
 
         else:
             raise ValueError(
@@ -189,36 +156,70 @@ class Simulation:
 
         self.history = np.array(history)
 
-    def advance_anim(self, time_text, sun_idx, name_labels, t, method, HOST_INDEX) -> None:
-        """
-        Animates the simulation results. Still in progress.
-
-        Takes two inputs n and legend. 
-        Think of n like a multiplier, the higher it is the faster the simulation will be.
-        Legend takes a boolean, true or false, and just controls whether there is a legend or not.
-
-        """
-        state = self.mat
 
 
-        # # Advance physics several steps per frame so the animation is fast enough.
-        # for _ in range(STEPS_PER_FRAME):
-        #     state, t = advance(state, t)
-        #     if t >= T_END:
-        #         break
+    def animate(self, dt, T, t0, method) -> None:
+        t = t0
+        nsteps = int((T-t0)/dt)
+        print(nsteps)
 
-        # Recenter on the Sun and push new positions to the spheres and labels.
-        origin = state[sun_idx, :3]
+        rate(animation_fps)
+        sun_idx = self.bodies.index(Sun)
+        self.scene, self.spheres, name_labels, HOST_INDEX, time_text = initialise_animation(
+            self.history[0,:,:], method, self.bodies, sun_idx
+        )
 
-        for i, s in enumerate(self.spheres):
-            new_pos = display_position(i, state, origin, HOST_INDEX)
-            s.pos = new_pos
-            name_labels[i].pos = new_pos
+        # Create pause and close buttons
+        def _toggle_pause(b):
+            global paused
+            paused = not paused
+            b.text = "Resume" if paused else "Pause"
+            for lbl in name_labels:
+                lbl.visible = paused
+        
+        def _close_anim(b):
+            global running
+            running = False
+            #exit()
 
-        days  = t / 86400.0
-        years = days / 365.0
-        time_text.text = f"Day {days:,.1f}   Year {years:,.2f}   method = {method}"
+        self.scene.append_to_caption("\n")
+        button(text="Pause", bind=_toggle_pause)
+        button(text="Close", bind=_close_anim)
 
+
+        # Loop animation until user exits program
+        while running:
+            for n in range(0, nsteps, frame_skip):
+                while paused:
+                    rate(animation_fps)
+
+                state = self.history[n, :, :]
+
+                origin = state[sun_idx, :3]
+
+                for i, s in enumerate(self.spheres):
+                    new_pos = display_position(i, state, origin, HOST_INDEX)
+                    s.pos = new_pos
+                    name_labels[i].pos = new_pos
+
+                t = t0 + n * dt
+                days  = t / 86400.0
+                years = days / 365.0
+                time_text.text = f"Day {days:,.1f}   Year {years:,.2f}   method = {method}"
+
+                rate(animation_fps)
+
+                #Loop animation until user closes it
+                if not running:
+                    exit()
+
+            # Clear trails for next loop of animation 
+            for i, s in enumerate(self.spheres):
+                        s.clear_trail()
+                    
+                
+
+            
 
 
 
@@ -244,11 +245,17 @@ class Simulation:
             z = mySim.history[:, i, 2]
             ax.plot(x, y, z, label=body.name)
 
-            # ax.legend() # can uncomment for legend, blocks the view tho
+            # ax.legend() # can uncomment for legend, blocks the view
         plt.show()
 
 
-# comment out or in whichever is needed
+
+
+
+
+
+# List of bodies to be used in simulation
+# Comment out or in whichever is needed
 bodies = [
     Sun,
     Mercury,
@@ -271,12 +278,14 @@ bodies = [
 
 
 
+# Calling of simulation run and either animation or plot creation
+
 mySim = Simulation(bodies)
 
-mySim.run(dt, T, t0=0, method=user_method)
+mySim.run(dt, T, t0, user_method)
 
 # plot or animation
 if (args.visual == "plot"):
     mySim.plot()
-# elif (args.visual == "anim"):
-#     mySim.animate(10, legend=True)
+elif (args.visual == "anim"):
+    mySim.animate(dt, T, t0, user_method)
