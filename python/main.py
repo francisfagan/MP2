@@ -82,15 +82,11 @@ class Simulation:
         print(self.mat)
 
     def accel_matrix(self, pos: np.ndarray) -> np.ndarray:
-        acc = np.zeros_like(pos)  # Initialise empty acceleration matrix
-        for i in range(self.N_bodies):
-            for j in range(self.N_bodies):
-                if i == j:  # obviously not calculating gravity due to itself
-                    continue
-                r_vec = pos[j] - pos[i]  # distance between objects
-                r_abs = np.linalg.norm(r_vec)
-                acc[i] += (G * self.masses[j] * r_vec) / (r_abs**3)
-        return acc
+        diff = pos[None, :, :] - pos[:, None, :]
+        r2   = np.sum(diff**2, axis=-1)
+        np.fill_diagonal(r2, np.inf)
+        inv_r3 = r2**-1.5
+        return np.einsum('ij,ijk,j->ik', inv_r3, diff, self.masses) * G
             
     def dmatrix(self, t, mat: np.ndarray) -> np.ndarray:
         """
@@ -104,8 +100,6 @@ class Simulation:
 
         dmat[:, 3:] = self.accel_matrix(pos)
         return dmat
-
-
 
     def run(self, dt: float, T: float, t0: float = 0.0,
             method: str = "abm4") -> None:
