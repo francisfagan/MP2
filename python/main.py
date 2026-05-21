@@ -1,13 +1,10 @@
-#from vpython_test import FPS
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from matplotlib.animation import FuncAnimation
 import argparse
 from vpython import button, canvas, color, label, rate, sphere, vector, wtext
-
 from animation_funcs import *
-from pathlib import Path
+
 from integrators import rk4, abm4, abm4_rk4, leapfrog
 
 from bodies import (
@@ -32,11 +29,11 @@ from bodies import (
 
 # parser for cli arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--dt", type=float, default=86400, help="timestep in seconds (default = 86400s)")
+parser.add_argument("--dt", type=float, default=7200, help="timestep in seconds (default = 7200s = 2 hrs)")
 parser.add_argument("--years", type=int, default=10, help="simulation duration in years (default = 10 years)")
-parser.add_argument("--method", type=str, default="abm4", choices=["rk4", "abm4", "leapfrog"], help="choose simulation method")
-parser.add_argument("--visual", type=str, default="plot", choices=["plot", "anim"], help="choose plot or animation")
-parser.add_argument("--frame_skip", type=float, default=10, help="controls number of frames skipped during animation. Default is 10. Higher produces faster animation, but movement of bodies with short orbits becomes erratic.")
+parser.add_argument("--method", type=str, default="leapfrog", choices=["rk4", "abm4", "leapfrog"], help="choose simulation method. Default is leapfrog method")
+parser.add_argument("--visual", type=str, default="anim", choices=["plot", "anim"], help="choose plot or animation")
+parser.add_argument("--frame_skip", type=float, default=10, help="controls number of frames skipped during animation. Default is 10, every 10th iteration is animated. Higher produces faster animation, but movement of bodies with short orbits becomes erratic.")
 parser.add_argument("--fps", type=float, default=30, help="VPython animation frame rate; lower values slow the animation. Default is 30")
 parser.add_argument("--texture_dir", type=str, default="textures", help="choose directory for body textures. Texture names must match planet names. Default is /MP2/textures when cwd is /MP2/")
 args = parser.parse_args()
@@ -44,23 +41,23 @@ args = parser.parse_args()
 # simulation arguments
 t0 = 0
 dt = args.dt
-T = args.years * 365 *24 * 3600
+T = args.years * 365 * 24 * 3600
 user_method = args.method
 animation_fps = args.fps
 frame_skip = int(args.frame_skip)
+texture_dir = args.texture_dir
 paused = False
 running = True
 
 
-
 # Constants
 Au = 149597870.700  # in kilometers,
-G = 6.674e-20 / Au ** 3 # km-3 * km^3
+G = 6.674e-20 / Au ** 3 # In Au^3 * kg^-1 * s^-2
+
+
+
 
 np.set_printoptions(linewidth=100) # simply allows printing matrices to the screen to be more readable
-
-
-
 
 
 
@@ -75,16 +72,19 @@ class Simulation:
         self.spheres = []
         self.scene : canvas
 
+    # Initialise self.mat with initial positions and velocities of all bodies
+    # Position in Au
+    # velocity in Au/sec
     def initiliase_matrix(self, bodies: list[Body]) -> np.ndarray:
         return np.array([body.return_vec()/Au for body in bodies], dtype=float)
-    
 
+    
 
     def print_matrix(self) -> None:
         print(self.mat)
 
     # Calculates just the acceleration for each body at time t
-    # 
+    # Used by leapfrog method
     def accel_matrix(self, pos: np.ndarray) -> np.ndarray:
         diff = pos[None, :, :] - pos[:, None, :]
         r2   = np.sum(diff**2, axis=-1)
@@ -110,6 +110,7 @@ class Simulation:
 
     # Main method called for running sim.
     #   -Calculates body positions one time step forward using chosen method
+    #   -Stores each iteration in history 3D array
     def run(self, dt: float, T: float, t0: float = 0.0,
             method: str = "abm4") -> None:
         n_steps = int((T - t0) / dt)
@@ -157,16 +158,16 @@ class Simulation:
         self.history = np.array(history)
 
 
-
-    def animate(self, dt, T, t0, method) -> None:
+    # Creates and runs animation of N bodies orbiting with the sun as the origin
+    def animate(self, dt, T, t0, method, texture_dir) -> None:
         t = t0
         nsteps = int((T-t0)/dt)
-        print(nsteps)
-
         rate(animation_fps)
         sun_idx = self.bodies.index(Sun)
+
+        #Initialise animation canvas and sphere objects
         self.scene, self.spheres, name_labels, HOST_INDEX, time_text = initialise_animation(
-            self.history[0,:,:], method, self.bodies, sun_idx
+            self.history[0,:,:], method, self.bodies, sun_idx, texture_dir
         )
 
         # Create pause and close buttons
@@ -180,7 +181,7 @@ class Simulation:
         def _close_anim(b):
             global running
             running = False
-            #exit()
+
 
         self.scene.append_to_caption("\n")
         button(text="Pause", bind=_toggle_pause)
@@ -255,7 +256,7 @@ class Simulation:
 
 
 # List of bodies to be used in simulation
-# Comment out or in whichever is needed
+# Comment out unwanted bodies
 bodies = [
     Sun,
     Mercury,
@@ -288,4 +289,4 @@ mySim.run(dt, T, t0, user_method)
 if (args.visual == "plot"):
     mySim.plot()
 elif (args.visual == "anim"):
-    mySim.animate(dt, T, t0, user_method)
+    mySim.animate(dt, T, t0, user_method, texture_dir)
