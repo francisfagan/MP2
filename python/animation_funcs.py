@@ -1,3 +1,4 @@
+from enum import NAMED_FLAGS
 from pathlib import Path
 from vpython import button, canvas, color, label, rate, sphere, vector, wtext
 import numpy as np
@@ -10,7 +11,7 @@ STEPS_PER_FRAME = 24                 # advance 10 simulated days per drawn frame
 FPS         = 60                      # max frames per second
 TRAIL_LEN   = 4000                    # points kept per orbital trail
 SCENE_RANGE_AU = 35.0                 # initial zoom (AU)
-MOON_ORBIT_SCALE = 150.0              # visual-only magnification of moon-to-host offsets
+MOON_ORBIT_SCALE = 50.0              # visual-only magnification of moon-to-host offsets
 TEXTURE_DIR = "textures"              # folder with <BodyName>.jpg|png; set to None to disable
 
 # Each satellite is drawn at host_pos + (sat_pos - host_pos) * MOON_ORBIT_SCALE,
@@ -65,16 +66,16 @@ def display_position(i, state, origin, HOST_INDEX):
 
     if i in HOST_INDEX:
         h = HOST_INDEX[i]
-        host_au = (state[h, :3] - origin) / AU
-        offset_au = (state[i, :3] - state[h, :3]) / AU * MOON_ORBIT_SCALE
+        host_au = (state[h, :3] - origin)
+        offset_au = (state[i, :3] - state[h, :3]) * MOON_ORBIT_SCALE
         p_au = host_au + offset_au
     else:
-        p_au = (state[i, :3] - origin) / AU
+        p_au = (state[i, :3] - origin)
     return vector(*p_au)
 
 def visual_radius(body):
     """Exaggerated display radius in AU."""
-    mult = RADIUS_MULT.get(body.name, 1000)
+    mult = RADIUS_MULT.get(body.name, 100)/1.5
     return max(body.radius / AU * mult, 0.014)
 
 
@@ -132,6 +133,7 @@ def initialise_animation(state, method, bodies, sun_idx):
             for sat, host in HOST_BY_SATELLITE.items()
             if sat in NAME_TO_INDEX and host in NAME_TO_INDEX
         }
+
         # Build spheres, all positioned relative to the Sun so the Sun stays at origin.
         origin  = state[sun_idx, :3].copy()
 
@@ -186,5 +188,7 @@ def initialise_animation(state, method, bodies, sun_idx):
                 background=color.white,
                 visible=False,
             ))
+        
+        return scene, spheres, name_labels, HOST_INDEX, time_text
 
-            return scene, spheres, name_labels, HOST_INDEX
+
