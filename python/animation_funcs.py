@@ -83,9 +83,8 @@ def visual_radius(body):
 
 
 
-def load_textures(bodies):
+def load_textures(bodies, texture_dir):
     _TEXTURES = {}
-    texture_dir = TEXTURE_DIR   #CHANGE TO USE USER INPUT TEXTURE DIR
     if texture_dir is not None:
         cwd = Path.cwd() 
         _tex_root = cwd  / texture_dir
@@ -111,7 +110,7 @@ def load_textures(bodies):
     return _TEXTURES
 
 
-def initialise_animation(state, method, bodies, sun_idx):
+def initialise_animation(state, method, bodies, sun_idx, texture_dir):
         scene = canvas(
         title=f"16-body solar system — {method.upper()}",
         width=1400, height=850, background=color.black,
@@ -125,8 +124,9 @@ def initialise_animation(state, method, bodies, sun_idx):
         time_text = wtext(text="")
 
         #Search in given texture directory for textures for all bodies modelled
-        _TEXTURES = load_textures(bodies)
+        _TEXTURES = load_textures(bodies, texture_dir)
 
+        # HOST_INDEX contains indices of each satellite|host pair in the 16 bodies
         NAME_TO_INDEX = {b.name: i for i, b in enumerate(bodies)}
         HOST_INDEX = {
             NAME_TO_INDEX[sat]: NAME_TO_INDEX[host]
@@ -159,6 +159,7 @@ def initialise_animation(state, method, bodies, sun_idx):
             s.rotate(angle=5*np.pi/8, axis=vector(1, 0, 0))
 
             #Not currently working. Used to add ring to saturn
+            # Unknown error with vpython compound() function causes program to hang indefinitely
             # if b.name == "Saturn":
             #     print("Adding Ring")
             #     # s = ring(pos = pos,
