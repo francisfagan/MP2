@@ -6,10 +6,7 @@ import numpy as np
 AU = 149597870.700      # km
 
 # --- simulation settings ----------------------------------------------------
-NEPTUNE_PERIOD_YEARS = 164.79         # Neptune's orbital period (years)
-STEPS_PER_FRAME = 24                 # advance 10 simulated days per drawn frame
-FPS         = 60                      # max frames per second
-TRAIL_LEN   = 4000                    # points kept per orbital trail
+TRAIL_LEN   = 10000                   # points kept per orbital trail
 SCENE_RANGE_AU = 35.0                 # initial zoom (AU)
 MOON_ORBIT_SCALE = 70.0              # visual-only magnification of moon-to-host offsets
 TEXTURE_DIR = "textures"              # folder with <BodyName>.jpg|png; set to None to disable
