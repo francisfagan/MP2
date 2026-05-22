@@ -46,7 +46,8 @@ python python/main.py --method abm4
 ```
 
 # Sources
+https://planet-texture-maps.fandom.com/wiki/
 
-https://www.planetaryvisions.com/index.php
+[www.planetaryvision.com]https://www.planetaryvisions.com/Top.php?cat=4
 
-https://ssd.jpl.nasa.gov/horizons/app.html#/
+[ssd.jpl.nasa.gov]https://ssd.jpl.nasa.gov/horizons/app.html#/
