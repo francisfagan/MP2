@@ -1,15 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import argparse
-from vpython import button, canvas, color, label, rate, sphere, vector, wtext
-from animation_funcs import *
 
-from integrators import rk4, abm4, abm4_rk4, leapfrog
 from simulation import *
 
 from bodies import (
-    Body,
     Sun,
     Mercury,
     Venus,
@@ -30,7 +23,7 @@ from bodies import (
 
 # parser for cli arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--dt", type=float, default=7200, help="timestep in seconds (default = 7200s = 2 hrs)")
+parser.add_argument("--dt", type=float, default=3600, help="timestep in seconds (default = 3600s = 1 hr)")
 parser.add_argument("--years", type=int, default=10, help="simulation duration in years (default = 10 years)")
 parser.add_argument("--method", type=str, default="leapfrog", choices=["rk4", "abm4", "leapfrog"], help="choose simulation method. Default is leapfrog method")
 parser.add_argument("--visual", type=str, default="anim", choices=["plot", "anim"], help="choose plot or animation")
@@ -82,4 +75,4 @@ mySim.run(dt, T, t0, user_method)
 if (args.visual == "plot"):
     mySim.plot()
 elif (args.visual == "anim"):
-    mySim.animate(dt, T, t0, user_method, texture_dir)
+    mySim.animate(dt, T, t0, user_method, texture_dir, animation_fps, frame_skip)

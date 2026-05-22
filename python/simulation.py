@@ -6,6 +6,13 @@ from tqdm import tqdm
 from vpython import button, canvas, color, label, rate, sphere, vector, wtext
 from animation_funcs import *
 
+
+from bodies import (
+    Body,
+    Sun,
+)
+
+
 paused = False
 running = True
 
@@ -112,10 +119,10 @@ class Simulation:
 
 
     # Creates and runs animation of N bodies orbiting with the sun as the origin
-    def animate(self, dt, T, t0, method, texture_dir) -> None:
+    def animate(self, dt, T, t0, method, texture_dir, fps, frame_skip) -> None:
         t = t0
         nsteps = int((T-t0)/dt)
-        rate(animation_fps)
+        rate(fps)
         sun_idx = self.bodies.index(Sun)
 
         #Initialise animation canvas and sphere objects
@@ -145,7 +152,7 @@ class Simulation:
         while running:
             for n in range(0, nsteps, frame_skip):
                 while paused:
-                    rate(animation_fps)
+                    rate(fps)
 
                 state = self.history[n, :, :]
 
@@ -161,7 +168,7 @@ class Simulation:
                 years = days / 365.0
                 time_text.text = f"Day {days:,.1f}   Year {years:,.2f}   method = {method}"
 
-                rate(animation_fps)
+                rate(fps)
 
                 #Loop animation until user closes it
                 if not running:
@@ -194,9 +201,9 @@ class Simulation:
         ax.zaxis.set_ticklabels([])
 
         for i, body in enumerate(self.bodies):
-            x = mySim.history[:, i, 0]
-            y = mySim.history[:, i, 1]
-            z = mySim.history[:, i, 2]
+            x = self.history[:, i, 0]
+            y = self.history[:, i, 1]
+            z = self.history[:, i, 2]
             ax.plot(x, y, z, label=body.name)
 
             # ax.legend() # can uncomment for legend, blocks the view
