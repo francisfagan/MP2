@@ -1,7 +1,10 @@
 # MP2
 ![cover_image](images/cover.png)
 EEEN30150 Modelling and Simulation, Minor Project 2.
-Numerical simulation of the solar system using Newton's law of gravitation.
+
+Numerical simulation of the solar system using Newton's law of gravitation. Fourth-order numerical integration methods used include Runge-Kutta, Adam's Bashforth. Given these are non-symplectic, and do not adhere to conservation of energy and momentum, a symplectic method, leapfrog, was implemented. 
+
+vpython is used for the animation along with matplotlib for plotting.
 
 # Installation
 ```bash
