@@ -1,6 +1,6 @@
 # MP2
+![cover_image](images/cover.png)
 EEEN30150 Modelling and Simulation, Minor Project 2.
-
 Numerical simulation of the solar system using Newton's law of gravitation.
 
 # Installation
@@ -24,7 +24,7 @@ python python/main.py [--dt <time difference in seconds>] [--years <years>] [--v
 | `--dt` | int | 3600 | Timestep in seconds (default is 1 hour) |
 | `--years` | int | 10 | Simulation duration in years |
 |`--method`| str | leapfrog | Specifices the method used for numerical integration. Other methods are `rk4` and `abm4` |
-| `--visual` | str | `anim` | Visualisation as plot or animation, can also choose `plot` |
+| `--visual` | str | anim | Visualisation as plot or animation, can also choose `plot` |
 | `--frame_skip` | int | 10 | Skips a specified amount of frames |
 | `--fps` | int | 30 | Frames per second for animation |
 | `--texture_dir` | path | textures/ | Path to textures for simulations (jpgs) |
