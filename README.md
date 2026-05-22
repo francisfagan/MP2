@@ -46,7 +46,7 @@ python python/main.py --method abm4
 ```
 
 # Sources
-https://planet-texture-maps.fandom.com/wiki/
+https://www.solarsystemscope.com/
 
 https://www.planetaryvisions.com/Top.php?cat=4
 
