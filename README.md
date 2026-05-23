@@ -7,20 +7,24 @@ Numerical simulation of the solar system using Newton's law of gravitation. Four
 vpython is used for the animation along with matplotlib for plotting.
 
 # Installation
+
 ```bash
 git clone https://github.com/francisfagan/MP2.git
 cd MP2/
 ```
+
 ## Python dependencies
+
 ```bash
 vpython
 tqdm
 matplotlib
 numpy
 ```
+
 # Usage
 ```bash
-python python/main.py [--dt <time difference in seconds>] [--years <years>] [--visual <plot || anim>] [--frame_skip <frames_to_skip>] [--texture_dir <path_to_directory>] [--fps <fps>]
+python python/main.py [--help] [--dt <time difference in seconds>] [--years <years>] [--visual <plot || anim>] [--frame_skip <frames_to_skip>] [--fps <fps>] [--texture_dir <path_to_directory>]  [--kepler2 <object>]
 ```
 | Argument | Type | Default | Description |
 |---|---|---|---|
