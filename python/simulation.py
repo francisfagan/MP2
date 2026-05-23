@@ -123,7 +123,7 @@ class Simulation:
         t = t0
         nsteps = int((T-t0)/dt)
         rate(fps)
-        sun_idx = self.bodies.index(Sun)
+        sun_idx = self.bodies.index(Sun)  
 
         #Initialise animation canvas and sphere objects
         self.scene, self.spheres, name_labels, HOST_INDEX, time_text = initialise_animation(
@@ -158,11 +158,12 @@ class Simulation:
 
                 origin = state[sun_idx, :3]
 
+                # Update position of each sphere object
                 for i, s in enumerate(self.spheres):
                     new_pos = display_position(i, state, origin, HOST_INDEX)
                     s.pos = new_pos
                     name_labels[i].pos = new_pos
-
+                            
                 t = t0 + n * dt
                 days  = t / 86400.0
                 years = days / 365.0
@@ -176,7 +177,7 @@ class Simulation:
 
             # Clear trails for next loop of animation 
             for i, s in enumerate(self.spheres):
-                        s.clear_trail()
+                s.clear_trail()
                     
                 
 
