@@ -6,9 +6,10 @@ import numpy as np
 AU = 149597870.700      # km
 
 # --- simulation settings ----------------------------------------------------
-TRAIL_LEN   = 5000                   # points kept per orbital trail
+TRAIL_LEN   = 12000                   # points kept per orbital trail
 SCENE_RANGE_AU = 35.0                 # initial zoom (AU)
 MOON_ORBIT_SCALE = 70.0              # visual-only magnification of moon-to-host offsets
+MIN_RADIUS = 0.014                    # Min visual radius to be displayed for each body
 TEXTURE_DIR = "textures"              # folder with <BodyName>.jpg|png; set to None to disable
 
 # Each satellite is drawn at host_pos + (sat_pos - host_pos) * MOON_ORBIT_SCALE,
@@ -26,10 +27,10 @@ HOST_BY_SATELLITE = {
 # Visual-only radius multiplier per body. Dynamics use the *real* mass/radius;
 # this only fattens the spheres so you can see them.
 RADIUS_MULT = {
-    "Sun":   35,   "Mercury": 2500, "Venus": 2000, "Earth": 2000,
-    "Moon":  4500, "Mars": 2500,    "Jupiter": 500, "Io": 5500,
-    "Europa":5500, "Ganymede":5000, "Callisto":5000, "Saturn":700,
-    "Titan": 5000, "Uranus":1300,    "Neptune":1100,  "Triton":5500,
+    "Sun":   23,   "Mercury": 1700, "Venus": 1300, "Earth": 1300,
+    "Moon":  3000, "Mars": 1700,    "Jupiter": 333, "Io": 3700,
+    "Europa":3700, "Ganymede":3300, "Callisto":3300, "Saturn": 470,
+    "Titan": 3300, "Uranus":870,    "Neptune":730,  "Triton":3700,
 }
 COLOURS = {
     "Sun":      color.yellow,
@@ -51,16 +52,11 @@ COLOURS = {
 }
 
 
+
+# Maps a body's real position to drawn position in AU
+# Position defined relative to origin at the sun
+# Distance of moons from host planet exaggerated to make them more visible
 def display_position(i, state, origin, HOST_INDEX):
-    """
-    Map a body's real km position to its drawn position in AU.
-
-    Planets are drawn at their true (Sun-relative) location in AU. Moons are
-    drawn at host_visual + MOON_ORBIT_SCALE * (moon - host), so their orbits
-    are visible but their *physical* positions in `state` are untouched.
-    """
-
-
     if i in HOST_INDEX:
         h = HOST_INDEX[i]
         host_au = (state[h, :3] - origin)
@@ -72,14 +68,14 @@ def display_position(i, state, origin, HOST_INDEX):
 
 def visual_radius(body):
     """Exaggerated display radius in AU."""
-    mult = RADIUS_MULT.get(body.name, 100)/1.5
-    return max(body.radius / AU * mult, 0.014)
+    mult = RADIUS_MULT.get(body.name, 1000)
+    return max(body.radius / AU * mult, MIN_RADIUS)
 
 
 
 
 
-
+# Loads textures for each body from specified directory
 def load_textures(bodies, texture_dir):
     _TEXTURES = {}
     if texture_dir is not None:
@@ -107,6 +103,8 @@ def load_textures(bodies, texture_dir):
     return _TEXTURES
 
 
+# Initialises animation canvas for animate() method in simulation class
+# Creates sphere object for each body, loads in textures, sets initial positions
 def initialise_animation(state, method, bodies, sun_idx, texture_dir):
         scene = canvas(
         title=f"16-body solar system — {method.upper()}",
