@@ -179,12 +179,8 @@ class Simulation:
                         s.clear_trail()
                     
                 
-
-            
-
-
-
     def plot(self) -> None:
+
         """
         Simulation function for plotting the overall arc that each object has taken.
         Takes in itself as an input and returns nothing.
@@ -209,3 +205,47 @@ class Simulation:
             # ax.legend() # can uncomment for legend, blocks the view
         plt.show()
 
+    def kepler2_verification(self, T: int, dt: int, body_name: str = "Earth", reference_name: str = "Sun") -> None:
+        """
+        Kepler's second law states that a line segment joining a planet and the Sun sweeps out equal areas during equal intervals of time.
+        This function can also be used to verify this for satellites also, using options shown in the --help cli function.
+        dA/dt = 0.5 * |r x v|
+        The following formula dA/dt = 0.5 * |r_i x r_{i+1}| / dt is found through the approximation outlined in the .pdf document. 
+        Essentially, velocity is approximated as the distance between two points divided by the timestep.
+        
+        Upon completion, a plot showing constant dA/dt will be shown along with an output for the mean and the variation of these values.
+        Choice of this function from the command line exits after completion and thus NO animation will be shown afterward.
+        """
+
+        print(f"Verifying Kepler's second law for {body_name} with the reference body to {reference_name}.")
+
+        # find body and reference body index
+        ref_idx = next((i for i, b in enumerate(self.bodies) if b.name == reference_name), None)
+        body_idx = next((i for i, b in enumerate(self.bodies) if b.name == body_name), None)
+
+        # get positions from self.history after run() is called
+        ref_pos  = self.history[:, ref_idx, :]
+        body_pos = self.history[:, body_idx, :]
+
+        # this gives position of body relative to its reference body at each timestep
+        r = body_pos - ref_pos
+
+        cross_product = np.cross(r[:-1], r[1:]) # cross product for next calculation
+        dA_dt = 0.5 * np.linalg.norm(cross_product, axis=1) / dt # dA/dt = 1/2 |r_i x r_(i+1)|
+
+        
+        days = np.arange(len(dA_dt)) * dt / 86400.0
+
+        variation = (dA_dt.max() - dA_dt.min()) / dA_dt.mean() * 100 # how much the constant value varied, if low the value is approximately constant
+
+        # terminal output
+        print(f"The variation of areal velocity is {variation:.5f}%.")
+        print(f"The mean of areal velocity is {dA_dt.mean():5e} AU^2/s.")
+
+        plt.plot(days, dA_dt, '.', markersize=1)
+        plt.axhline(dA_dt.mean(), color='r', linestyle="--", label=f"mean={dA_dt.mean():.4e}, with variation = {variation:.3f}%")
+        plt.xlabel("Time [days]")
+        plt.ylabel("dA/dt [$Au^2\/s$]")
+        plt.title(f"Kepler's 2nd Law for {body_name} relative to {reference_name} for {T} years.")
+        plt.legend()
+        plt.show()

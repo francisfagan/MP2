@@ -30,7 +30,8 @@ python python/main.py [--dt <time difference in seconds>] [--years <years>] [--v
 | `--visual` | str | anim | Visualisation as plot or animation, can also choose `plot` |
 | `--frame_skip` | int | 10 | Skips a specified amount of frames |
 | `--fps` | int | 30 | Frames per second for animation |
-| `--texture_dir` | path | textures/ | Path to textures for simulations (jpgs) |
+| `--texture_dir` | path | textures/ | Path to textures for simulations (.jpg) |
+| `--kepler2` | str | Earth | Choose an object to verify Kepler's second law for. A small variation value printed to the screen shows that the dA/dt is approximately constant |
 
 # Examples
 Below are examples for exectuting the simulation. 
@@ -46,6 +47,9 @@ python python/main.py --visual ani --skip_frames 50
 
 # animation for default length and dt using method abm4
 python python/main.py --method abm4
+
+# verify Kepler's 2nd law for Earth over a time period of 150 years
+python python/main.py --kepler2 Earth --years 150
 ```
 
 # Sources
