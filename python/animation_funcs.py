@@ -6,7 +6,7 @@ import numpy as np
 AU = 149597870.700      # km
 
 # --- simulation settings ----------------------------------------------------
-TRAIL_LEN   = 10000                   # points kept per orbital trail
+TRAIL_LEN   = 5000                   # points kept per orbital trail
 SCENE_RANGE_AU = 35.0                 # initial zoom (AU)
 MOON_ORBIT_SCALE = 70.0              # visual-only magnification of moon-to-host offsets
 TEXTURE_DIR = "textures"              # folder with <BodyName>.jpg|png; set to None to disable
@@ -28,8 +28,8 @@ HOST_BY_SATELLITE = {
 RADIUS_MULT = {
     "Sun":   35,   "Mercury": 2500, "Venus": 2000, "Earth": 2000,
     "Moon":  4500, "Mars": 2500,    "Jupiter": 500, "Io": 5500,
-    "Europa":5500, "Ganymede":5000, "Callisto":5000, "Saturn":550,
-    "Titan": 5000, "Uranus":900,    "Neptune":900,  "Triton":5500,
+    "Europa":5500, "Ganymede":5000, "Callisto":5000, "Saturn":700,
+    "Titan": 5000, "Uranus":1300,    "Neptune":1100,  "Triton":5500,
 }
 COLOURS = {
     "Sun":      color.yellow,
@@ -110,13 +110,12 @@ def load_textures(bodies, texture_dir):
 def initialise_animation(state, method, bodies, sun_idx, texture_dir):
         scene = canvas(
         title=f"16-body solar system — {method.upper()}",
-        width=1400, height=850, background=color.black,
+        width=1920, height=900, background=color.black,
         )
         scene.range   = SCENE_RANGE_AU
         scene.forward = vector(-1.15, -0.75, -0.55)   # oblique view
         scene.up      = vector(0, 0, 1)
 
-        
 
         time_text = wtext(text="")
 
