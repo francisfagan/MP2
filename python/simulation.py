@@ -308,8 +308,8 @@ class Simulation:
 
 
     # Calculates the orbital period of a body based on its semi-major axis length, checking Kepler's 3rd Law
-    # Compares this to the theoretical orbit of that body
-    def kepler3_verification(self, T: int, dt: float, body_name: str = "Earth", reference_name: str = "Sun") -> None:
+    # Compares this to the Observed orbit of that body
+    def kepler3_verification(self, T: int, dt: float, body_name: str, reference_name: str) -> None:
 
         # find indices of bodies
         ref_idx = next((i for i, b in enumerate(self.bodies) if b.name == reference_name), None)
