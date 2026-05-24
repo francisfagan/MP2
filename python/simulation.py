@@ -20,6 +20,7 @@ running = True
 # Constants
 Au = 149597870.700  # in kilometers,
 G = 6.674e-20 / Au ** 3 # In Au^3 * kg^-1 * s^-2
+year = 365 * 24 * 3600  # 1 year in secs
 
 class Simulation:
     def __init__(self, bodies: list[Body]) -> None:
@@ -250,3 +251,42 @@ class Simulation:
         plt.title(f"Kepler's 2nd Law for {body_name} relative to {reference_name} for {T} years.")
         plt.legend()
         plt.show()
+
+
+    # Calculates the orbital period of a body based on its semi-major axis length, checking Kepler's 3rd Law
+    # Compares this to the theoretical orbit of that body
+    def kepler3_verification(self, T: int, dt: float, body_name: str = "Earth", reference_name: str = "Sun") -> None:
+
+        # find indices of bodies
+        ref_idx = next((i for i, b in enumerate(self.bodies) if b.name == reference_name), None)
+        body_idx = next((i for i, b in enumerate(self.bodies) if b.name == body_name), None)
+        if ref_idx is None or body_idx is None:
+            raise ValueError("Reference or body name not found in simulation bodies.")
+        ref_mass = self.bodies[ref_idx].mass
+        body_mass = self.bodies[body_idx].mass
+        body_period = self.bodies[body_idx].orbital_period
+
+
+        T = T / year
+        if T < body_period:
+            raise ValueError("Simulation period not long enough to guarantee semi-major axis captured.")
+
+        # positions (Au) over time
+        ref_pos = self.history[:, ref_idx, :]
+        body_pos = self.history[:, body_idx, :]
+
+        # radial distance series (Au)
+        rel_pos = body_pos - ref_pos
+        r = np.linalg.norm(rel_pos, axis=1)
+
+        # Min and max r on opposite sides of orbit
+        r_max = np.max(r)
+        r_min = np.min(r)
+
+        # Semi-major axis length. Half distance from r_min to r_max points
+        a = (r_max + r_min) / 2
+
+        calc_period = np.sqrt(((a**3) * (4*np.pi**2)) / (G*(ref_mass + body_mass))) / year
+        print(f'Calculated Period: {calc_period}')
+        print(f'Observed Period: {body_period}')
+        print(f'Percentage Error = {((calc_period - body_period) / body_period) * 100:.5f}%')       
