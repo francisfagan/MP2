@@ -24,7 +24,7 @@ numpy
 
 # Usage
 ```bash
-python python/main.py [--help] [--dt <time difference in seconds>] [--years <years>] [--visual <plot || anim>] [--frame_skip <frames_to_skip>] [--fps <fps>] [--texture_dir <path_to_directory>]  [--kepler2 <object>]
+python python/main.py [--help] [--dt <time difference in seconds>] [--years <years>] [--visual <plot || anim>] [--frame_skip <frames_to_skip>] [--fps <fps>] [--texture_dir <path_to_directory>]  [--kepler2 <object>] [--kepler3 <object>]
 ```
 | Argument | Type | Default | Description |
 |---|---|---|---|
@@ -35,7 +35,9 @@ python python/main.py [--help] [--dt <time difference in seconds>] [--years <yea
 | `--frame_skip` | int | 10 | Skips a specified amount of frames |
 | `--fps` | int | 30 | Frames per second for animation |
 | `--texture_dir` | path | textures/ | Path to textures for simulations (.jpg) |
-| `--kepler2` | str | Earth | Choose an object to verify Kepler's second law for. A small variation value printed to the screen shows that the dA/dt is approximately constant |
+| `--kepler2` | str | None | Choose an object to verify Kepler's second law for. A small variation value printed to the screen shows that the dA/dt is approximately constant |
+| `--kepler3` | str | None | Choose an object to verify Kepler's third law for. Prints the observed period from JPL Horizons, a calculated period using position data in self.history, and the percentage error |
+
 
 # Examples
 Below are examples for exectuting the simulation. 
@@ -54,6 +56,9 @@ python python/main.py --method abm4
 
 # verify Kepler's 2nd law for Earth over a time period of 150 years
 python python/main.py --kepler2 Earth --years 150
+
+# verify Kepler's 3rd law for Earth over a time period of 10 years
+python python/main.py --kepler3 Earth --years 10
 ```
 
 # Sources
