@@ -320,7 +320,7 @@ class Simulation:
         body_mass = self.bodies[body_idx].mass
         body_period = self.bodies[body_idx].orbital_period
 
-
+        #Convert T to years and check if longer than orbital period
         T = T / year
         if T < body_period:
             raise ValueError("Simulation period not long enough to guarantee semi-major axis captured.")
@@ -340,7 +340,9 @@ class Simulation:
         # Semi-major axis length. Half distance from r_min to r_max points
         a = (r_max + r_min) / 2
 
-        calc_period = np.sqrt(((a**3) * (4*np.pi**2)) / (G*(ref_mass + body_mass))) / year
+        calc_period = np.sqrt(((a**3) * (4*np.pi**2)) / (G*ref_mass)) / year
+        print(f'Keplers 3rd Law Verification for body: {self.bodies[body_idx].name}')
+        print("-----------------------------------------------------")
         print(f'Calculated Period: {calc_period}')
         print(f'Observed Period: {body_period}')
-        print(f'Percentage Error = {((calc_period - body_period) / body_period) * 100:.5f}%')       
+        print(f'Percentage Error = {((calc_period - body_period) / body_period) * 100:.5f}%\n')      
