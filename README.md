@@ -59,6 +59,9 @@ python python/main.py --kepler2 Earth --years 150
 
 # verify Kepler's 3rd law for Earth over a time period of 10 years
 python python/main.py --kepler3 Earth --years 10
+
+# Energy drift method comparison over 2 years for 3600s steps and 5 hour sampling
+python/energy_plot.py --years 2 --dt 3600 --sample-every 5
 ```
 
 # Sources
